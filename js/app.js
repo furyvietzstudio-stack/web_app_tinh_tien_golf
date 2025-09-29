@@ -321,3 +321,113 @@ function openPrintView() {
 }
 
 document.getElementById('btnExport')?.addEventListener('click', openPrintView);
+
+// --- Helper: clone 1 section và chuyển input/select thành text
+function cloneForExport(sectionEl) {
+  const clone = sectionEl.cloneNode(true);
+
+  // Ẩn / xóa nút bấm không cần trên trang xuất
+  clone.querySelectorAll('button,.btn,#addLine,.btn-del,.calc-btn').forEach(n => n.remove());
+
+  // Chuyển input/select/textarea -> span text
+  clone.querySelectorAll('input, select, textarea').forEach(el => {
+    const span = document.createElement('span');
+    let val = '';
+    if (el.tagName === 'SELECT') {
+      val = el.options[el.selectedIndex]?.text || el.value || '';
+    } else {
+      val = el.value || '';
+    }
+    span.className = 'export-field';
+    span.textContent = val;
+    el.replaceWith(span);
+  });
+
+  // Nếu là section chứa bảng dịch vụ: bỏ cột "삭제"
+  const tbl = clone.querySelector('.svc-table');
+  if (tbl) {
+    const delTh = tbl.querySelector('thead th.col-del');
+    if (delTh && delTh.parentElement) delTh.parentElement.removeChild(delTh);
+    clone.querySelectorAll('tbody td.col-del').forEach(td => td.remove());
+  }
+
+  return clone;
+}
+
+// --- Gom nội dung 3 phần cần xuất
+function buildExportHTML() {
+  const booking = document.querySelector('.booking-section');
+  const svcSection = document.querySelector('.svc-table')?.closest('section.card');
+  const summary = document.querySelector('.summary-bank');
+
+  const parts = [];
+  if (booking) parts.push(cloneForExport(booking).outerHTML);
+  if (svcSection) parts.push(cloneForExport(svcSection).outerHTML);
+  if (summary) parts.push(cloneForExport(summary).outerHTML);
+
+  return parts.join('\n');
+}
+
+// --- Mở trang mới (chỉ hiển thị 3 phần trên)
+function openExportPage() {
+  const brand = document.getElementById('brand')?.value?.trim() || '';
+  const title = brand ? `${brand} — Quotation` : 'Quotation';
+
+  const content = buildExportHTML();
+  const w = window.open('', '_blank');
+
+  w.document.write(`<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>${title}</title>
+
+  <!-- Dùng lại CSS chính của bạn -->
+  <link rel="stylesheet" href="css/style.css" />
+
+  <style>
+    /* Tối ưu giao diện cho trang xuất (MÀN HÌNH, không in) */
+    body{ background:#fff; }
+    .wrap{ width:min(900px,94vw); margin:28px auto; }
+    /* Ẩn mọi nút bấm còn sót lại nếu có */
+    .btn, button{ display:none !important; }
+    /* Trong bảng dịch vụ: đảm bảo dạng bảng chuẩn */
+    .svc-table{
+      border-collapse:collapse !important;
+      border-spacing:0 !important;
+      width:100%;
+    }
+    /* Nếu CSS gốc có responsive chuyển sang card, ép giữ bảng trên trang này */
+    @media (max-width: 900px){
+      .svc-table, .svc-table thead, .svc-table tbody,
+      .svc-table th, .svc-table td, .svc-table tr{
+        display:revert !important;
+        width:auto !important;
+      }
+      .svc-table tbody td::before{ content:'' !important; display:none !important; }
+    }
+    /* “Giá trị” thay cho input */
+    .export-field{
+      display:inline-block;
+      min-height:36px; padding:8px 12px;
+      border:1px solid #e5e7eb; border-radius:8px; background:#fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header style="margin-bottom:14px">
+      <h1 style="margin:0 0 6px">${title}</h1>
+      <p class="sub" style="margin:0;color:#64748b">Bản tổng hợp thông tin đặt dịch vụ</p>
+    </header>
+
+    ${content}
+  </div>
+</body>
+</html>`);
+  w.document.close();
+}
+
+// Gắn sự kiện cho nút
+document.getElementById('btnExportView')?.addEventListener('click', openExportPage);
