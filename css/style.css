@@ -544,7 +544,7 @@ input[type="number"]:focus,input[type="text"]:focus,select:focus,
   -webkit-appearance:none; margin:0;
 }
 .booking-section input[type="number"].pill-input{ -moz-appearance:textfield }
-
+s
 /* Tối ưu input date (hiển thị icon lịch gọn) */
 .booking-section input[type="date"].pill-input{
   line-height:44px; /* fix vertical-align giữa các trình duyệt */
@@ -632,3 +632,4 @@ input[type="number"]:focus,input[type="text"]:focus,select:focus,
   .summary-bank .totals > div{ padding:8px 10px; }
   .summary-bank .bank-note{ padding:8px 10px; }
 }
+

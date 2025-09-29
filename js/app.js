@@ -431,3 +431,4 @@ function openExportPage() {
 
 // Gắn sự kiện cho nút
 document.getElementById('btnExportView')?.addEventListener('click', openExportPage);
+
