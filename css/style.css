@@ -1,0 +1,634 @@
+/* =================== Base & Theme =================== */
+:root{
+  --bg:#f6f8fb;
+  --card:#fff;
+  --line:#e2e8f0;
+  --text:#0f172a;
+  --muted:#667085;
+  --primary:#3b82f6;
+  --hover:#f1f5ff;
+  --chip:#eef2ff;
+  --radius:16px;
+
+  /* shared */
+  --shadow:0 1px 0 rgba(16,24,40,.03);
+  --shadow-lg:0 6px 18px rgba(0,0,0,.06);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+img{max-width:100%;display:block}
+button{cursor:pointer}
+input,button,select{font:inherit}
+
+body{
+  margin:0;
+  background:linear-gradient(#fbfdff,#f6f8fb);
+  color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+}
+.wrap{width:min(1100px,92vw);margin:28px auto}
+h1{margin:0 0 6px;font-size:24px}
+.sub{margin:0 0 18px;color:var(--muted)}
+label{display:block;margin-bottom:6px;font-size:13px;color:var(--muted)}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px;
+  margin-bottom:16px;
+  box-shadow:var(--shadow);
+}
+
+.grid{display:grid;gap:12px}
+.g3{grid-template-columns:1fr 1fr 1fr}
+@media (max-width:900px){.g3{grid-template-columns:1fr}}
+
+input[type="number"],input[type="text"],select{
+  width:100%;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#fff;
+}
+.svc-input,.svc-select{
+  height:36px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:#fff;
+}
+.svc-input::placeholder{color:#94a3b8}
+
+/* Focus states (a11y) */
+.svc-input:focus,.svc-select:focus,
+input[type="number"]:focus,input[type="text"]:focus,select:focus,
+.btn:focus,.chip:focus,.svc-item:focus{outline:none;border-color:#93c5fd;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+
+/* =================== Service Accordion =================== */
+.service-acc details{
+  background:#f7f9fc;border:1px solid #e9edf3;border-radius:16px;margin-top:12px;overflow:hidden;
+}
+.service-acc summary{
+  list-style:none;cursor:pointer;padding:14px 16px;display:flex;gap:12px;align-items:center;background:#f7f9fc;
+}
+.service-acc summary:hover{background:#f2f6ff}
+.service-acc summary::-webkit-details-marker{display:none}
+.service-acc .acc-icon{
+  width:28px;height:28px;border-radius:10px;display:grid;place-items:center;background:#eaf0ff;color:#1d4ed8
+}
+.service-acc .acc-title{font-weight:700;color:#0f1e44}
+.service-acc .acc-caret{margin-left:auto;color:#94a3b8}
+.service-acc .acc-body{padding:14px;background:#fff}
+
+/* =================== Panels =================== */
+.svc-panels{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media (max-width:1000px){.svc-panels{grid-template-columns:1fr 1fr}}
+@media (max-width:640px){.svc-panels{grid-template-columns:1fr}}
+
+.svc-panel{
+  background:#fff;border:1px solid #e6ebf2;border-radius:18px;
+  padding:12px;display:flex;flex-direction:column;min-height:100px;overflow:hidden
+}
+.svc-panel__head{display:flex;align-items:center;gap:8px;padding:6px 8px 10px;cursor:pointer;user-select:none}
+.svc-panel__title{font-weight:700;color:#0f1e44}
+
+/* Caret button */
+.svc-panel__caret{
+  margin-left:auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  border:1px solid #cbd5e1;
+  background:#fff;
+  color:#64748b;
+  font-size:14px;
+  cursor:pointer;
+  transition:transform .25s ease, background .2s, color .2s;
+}
+.svc-panel__caret:hover{
+  background:#f1f5f9;
+  color:#2563eb;
+}
+.svc-panel.open .svc-panel__caret{
+  transform:rotate(180deg);
+  background:#2563eb;
+  color:#fff;
+  border-color:#2563eb;
+}
+
+
+.svc-list{
+  margin-top:4px;display:flex;flex-direction:column;gap:10px;
+  max-height:900px;overflow:hidden;transition:max-height .25s ease
+}
+.svc-panel.collapsed .svc-list{max-height:0}
+.svc-panel.collapsed .svc-panel__caret{transform:rotate(-90deg)}
+
+/* =================== Service items =================== */
+.svc-item{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:#f8fafc;border:1px solid #e4e9f1;border-radius:12px;padding:10px 12px;
+  transition:background .15s ease,border-color .15s ease,box-shadow .15s ease;cursor:pointer
+}
+.svc-item:hover{background:#f3f7ff;border-color:#d8e2ff;box-shadow:0 1px 0 rgba(37,99,235,.06)}
+.svc-name{color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.svc-price{color:#2563eb;font-weight:700;text-decoration:none}
+
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:900px){.chips{grid-template-columns:1fr 1fr}}
+@media (max-width:600px){.chips{grid-template-columns:1fr}}
+.chip{
+  padding:12px;background:#fff;border:1px solid var(--line);border-radius:12px;cursor:pointer;
+  transition:background .15s,border-color .15s
+}
+.chip:hover{background:var(--hover);border-color:#d4dcff}
+.price-note{margin-top:4px;font-size:12px;color:var(--muted)}
+
+/* =================== Selected table =================== */
+.table-title{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.table-title .tbl-icon{font-size:18px}
+.btn{padding:10px 14px;border-radius:12px;border:1px solid var(--primary);background:var(--primary);color:#fff;cursor:pointer}
+.btn.pill{margin-left:auto;border-radius:999px}
+.btn:hover{filter:brightness(.98)}
+
+/* consistent table look (thead pill, tbody card rows) */
+.svc-table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0 10px;
+}
+.svc-table thead th{
+  text-align:left;font-weight:600;color:#475569;font-size:13px;
+  background:#f8fafc;border:1px solid #e2e8f0;padding:12px
+}
+.svc-table thead th:first-child{border-top-left-radius:12px}
+.svc-table thead th:last-child{border-top-right-radius:12px}
+.svc-table tbody tr{
+  background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 1px 0 rgba(2,6,23,.04)
+}
+.svc-table tbody td{padding:10px 12px;border-top:1px solid #e2e8f0}
+
+.col-type{width:120px}
+.col-price{width:140px}
+.col-curr{width:90px}
+.col-qty{width:260px}
+.col-total{width:140px;text-align:right}
+.col-del{width:70px;text-align:center}
+
+.svc-qty-wrap{
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.svc-qty-wrap .calc-btn{
+  grid-column:5/span 1;padding:9px 12px;border-radius:10px;border:1px solid var(--primary);background:var(--primary);color:#fff;cursor:pointer
+}
+
+/* type chip + delete btn */
+.type-chip{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font-weight:600;color:#0f172a
+}
+.btn-del{width:36px;height:36px;border-radius:10px;border:1px solid #fecaca;background:#fff;color:#ef4444;cursor:pointer}
+.btn-del:hover{background:#fff1f2}
+
+/* Totals */
+.totals{display:grid;gap:8px}
+.totals>div{display:flex;justify-content:space-between;align-items:center}
+.grand{font-size:18px;font-weight:800}
+
+/* =================== Responsive tweaks =================== */
+@media (max-width:720px){
+  .col-type{width:96px}
+  .col-price{width:112px}
+  .col-curr{width:82px}
+  .col-qty{width:auto}
+  .col-total{width:110px}
+  .svc-qty-wrap{grid-template-columns:90px 1fr 80px 1fr 110px}
+}
+
+/* =================== Optional alt theme =================== */
+/* Thêm class vào <body class="alt-theme"> khi muốn */
+.alt-theme{
+  --bg:#ffffff;
+  --muted:#6b7280;
+  --primary:#2563eb;
+  --line:#e5e7eb;
+  --chip:#d1e9ff;
+  --shadow:var(--shadow-lg);
+}
+
+/* =================== OVERRIDES (ĐẶT Ở CUỐI – ƯU TIÊN CAO) =================== */
+/* Nếu cần “đè” nhanh giao diện, sửa tại đây thay vì chạm core */
+:root{
+  /* ví dụ: chỉnh sắc primary đậm hơn */
+  /* --primary:#1d4ed8; */
+}
+
+/* Ví dụ 1: làm hàng tbody nổi hơn *s/
+.svc-table tbody tr{
+  box-shadow:0 2px 6px rgba(2,6,23,.06);
+}
+
+/* Ví dụ 2: đổi hiệu ứng hover của .svc-item */
+.svc-item:hover{
+  background:#f0f5ff;border-color:#c7d2fe;box-shadow:0 2px 4px rgba(37,99,235,.08)
+}
+
+/* Ví dụ 3: tăng contrast phần header panel khi mở */
+.svc-panel__head:hover{background:#f8fbff}
+
+
+/* ==== FIX UI: svc-table row-card (override, đặt cuối file) ==== */
+
+/* Giữ khoảng cách giữa các hàng như “thẻ” */
+.svc-table{
+  border-collapse: separate !important;
+  border-spacing: 0 10px !important;
+}
+
+/* Không vẽ viền ở <tr> để tránh “đúp” border */
+.svc-table tbody tr{
+  border: none !important;
+  box-shadow: 0 2px 6px rgba(2,6,23,.06); /* hiệu ứng card nhẹ */
+}
+
+/* Vẽ viền trên từng <td> để tạo khối thống nhất */
+.svc-table tbody td{
+  background:#fff;                 /* màu nền của “card” */
+  border: 1px solid #e2e8f0;       /* viền quanh card */
+  border-left-width: 0;            /* cắt viền thừa giữa các ô */
+  border-right-width: 0;
+  border-top-width: 0;             /* tránh tạo “đường ngăn” ngang từng ô */
+  vertical-align: middle;
+}
+
+/* Bo góc ở 2 đầu hàng + khép viền 2 bên */
+.svc-table tbody td:first-child{
+  border-left-width: 1px;
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+.svc-table tbody td:last-child{
+  border-right-width: 1px;
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+/* Header giữ dạng “pill” */
+.svc-table thead th{
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+}
+.svc-table thead th:first-child{border-top-left-radius:12px}
+.svc-table thead th:last-child{border-top-right-radius:12px}
+
+/* Căn phải cột tổng + ổn định width cột xóa */
+.col-total{text-align:right !important}
+.col-del{text-align:center !important; width:70px}
+
+/* Mobile: bớt bó góc gắt để tránh tràn */
+@media (max-width: 720px){
+  .svc-table tbody td:first-child,
+  .svc-table tbody td:last-child{
+    border-radius: 10px;
+  }
+}
+
+/* ==== FIX bảng chi tiết dạng bảng chuẩn ==== */
+.svc-table{
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+  width: 100%;
+}
+
+.svc-table thead th,
+.svc-table tbody td{
+  border:1px solid #e2e8f0;
+  padding:10px 12px;
+  background:#fff;
+  text-align:left;
+}
+
+/* Header khác màu */
+.svc-table thead th{
+  background:#f8fafc;
+  font-weight:600;
+  font-size:13px;
+  color:#475569;
+}
+
+/* Bo góc chỉ header */
+.svc-table thead th:first-child{border-top-left-radius:12px}
+.svc-table thead th:last-child{border-top-right-radius:12px}
+
+/* Không bo góc từng hàng body nữa */
+.svc-table tbody tr{
+  border-radius:0;
+  box-shadow:none;
+}
+
+/* Căn chỉnh các cột đặc biệt */
+.col-total{text-align:right}
+.col-del{text-align:center;width:70px}
+
+
+/* ==== Responsive fix cho bảng chi tiết ==== */
+@media (max-width: 900px) {
+  .svc-table,
+  .svc-table thead,
+  .svc-table tbody,
+  .svc-table th,
+  .svc-table td,
+  .svc-table tr {
+    display: block;
+    width: 100%;
+  }
+
+  /* Ẩn header */
+  .svc-table thead {
+    display: none;
+  }
+
+  /* Mỗi dòng trở thành card */
+  .svc-table tbody tr {
+    margin-bottom: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 2px 6px rgba(2,6,23,.05);
+  }
+
+  .svc-table tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none !important;
+    padding: 8px 6px;
+  }
+
+  /* Hiển thị nhãn từ header */
+  .svc-table tbody td::before {
+    content: attr(data-label);
+    flex: 0 0 90px;
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+  }
+
+}
+
+/* ==== Quantity wrap đẹp, chia đều 2 ô ==== */
+.svc-qty-wrap{
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.svc-qty-wrap input{
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+}
+
+.svc-qty-wrap input:focus {
+  outline: none;
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+}
+
+.svc-panel__caret{
+  margin-left:auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  border:1px solid #cbd5e1;
+  background:#fff;
+  color:#64748b;
+  cursor:pointer;
+  transition:transform .25s ease, background .2s, color .2s;
+}
+.svc-panel__caret:hover{
+  background:#f1f5f9;
+  color:#2563eb;
+}
+.svc-panel.open .svc-panel__caret{
+  background:#2563eb;
+  color:#fff;
+  border-color:#2563eb;
+  transform:rotate(180deg);
+}
+
+/* ===== Golf panels — dùng chung (1 cột) ===== */
+.golf-panel .svc-list{ padding:8px; }
+
+.golf-panel .chips{
+  display:grid;
+  grid-template-columns:1fr;   /* luôn 1 cột */
+  gap:10px;
+}
+
+/* Item card */
+.golf-panel .chip.svc-item{
+  display:grid;
+  grid-template-columns:1fr auto;                  /* trái: nội dung, phải: giá */
+  grid-template-areas:"title price" "text price";  /* sắp xếp vùng */
+  align-items:center;
+  gap:2px 12px;
+  padding:12px 14px;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:12px;
+  box-shadow:0 1px 0 rgba(2,6,23,.04);
+  cursor:pointer;
+  transition:border-color .2s, box-shadow .2s, background .2s;
+}
+.golf-panel .chip.svc-item:hover{
+  background:#f8fbff;
+  border-color:#d4dcff;
+  box-shadow:0 2px 6px rgba(2,6,23,.06);
+}
+
+/* Tiêu đề, giờ & giá */
+.golf-panel .chip-title{
+  grid-area:title;
+  font-weight:800;
+  font-size:15px;
+  color:#0f172a;
+  margin:0;
+}
+.golf-panel .chip-text{
+  grid-area:text;
+  font-size:12.5px;
+  color:var(--muted);
+  line-height:1.3;
+  white-space:normal; /* cho phép xuống dòng tự nhiên */
+}
+.golf-panel .chip-price{
+  grid-area:price;
+  justify-self:end;
+  align-self:center;
+  font-weight:800;
+  font-size:14.5px;
+  color:var(--primary);
+  white-space:nowrap;
+}
+
+/* Header hover nhẹ (nếu muốn) */
+.golf-panel .svc-panel__head{ padding:10px 12px; }
+.golf-panel .svc-panel__head:hover{ background:#f8fbff; }
+
+
+/* =========================
+   Booking section (gộp)
+   고객 정보 / 예약 + 여행 기간
+   ========================= */
+.booking-section{ padding-top:14px; }
+
+/* Tiêu đề có icon */
+.booking-section .section-title{
+  display:flex; align-items:center; gap:8px;
+  margin-bottom:12px; font-weight:800;
+}
+.booking-section .section-title .sec-ico{ font-size:18px }
+
+/* Nhãn & khoảng cách */
+.booking-section label{
+  display:block; margin:0 0 6px;
+  font-size:13px; color:var(--muted);
+}
+
+/* Lưới 3 cột (group/guest/memo) */
+.booking-section .grid.g3{ gap:12px }
+@media (max-width: 900px){ .booking-section .grid.g3{ grid-template-columns:1fr 1fr } }
+@media (max-width: 640px){ .booking-section .grid.g3{ grid-template-columns:1fr } }
+
+/* Tiêu đề phụ cho phần ngày */
+.booking-section .subhead{
+  margin:14px 0 8px; font-weight:700; color:var(--muted);
+}
+
+/* Lưới 2 cột (start/end date) */
+.booking-section .grid.g2{
+  display:grid; grid-template-columns:1fr 1fr; gap:12px;
+}
+@media (max-width: 640px){ .booking-section .grid.g2{ grid-template-columns:1fr } }
+
+/* Pill inputs (dùng chung) */
+.booking-section .pill-input{
+  width:100%;
+  height:44px;
+  padding:0 16px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:#fff;
+  color:var(--text);
+  font:inherit;
+}
+.booking-section .pill-input::placeholder{ color:#94a3b8 }
+.booking-section .pill-input:focus{
+  outline:none; border-color:#93c5fd;
+  box-shadow:0 0 0 3px rgba(59,130,246,.15);
+}
+
+/* Tối ưu input number (ẩn spinner nhưng vẫn nhập được) */
+.booking-section input[type="number"].pill-input::-webkit-outer-spin-button,
+.booking-section input[type="number"].pill-input::-webkit-inner-spin-button{
+  -webkit-appearance:none; margin:0;
+}
+.booking-section input[type="number"].pill-input{ -moz-appearance:textfield }
+
+/* Tối ưu input date (hiển thị icon lịch gọn) */
+.booking-section input[type="date"].pill-input{
+  line-height:44px; /* fix vertical-align giữa các trình duyệt */
+}
+.booking-section input[type="date"].pill-input::-webkit-calendar-picker-indicator{
+  opacity:.75; margin-right:4px; cursor:pointer;
+}
+
+/* =========================
+   Summary + Bank (2-column)
+   ========================= */
+.summary-bank .sum-grid{
+  display:grid;
+  grid-template-columns: 1.1fr 0.9fr;  /* trái rộng hơn một chút */
+  gap:16px;
+  align-items:stretch;
+}
+@media (max-width: 900px){
+  .summary-bank .sum-grid{ grid-template-columns:1fr; gap:12px; }
+}
+
+/* Hai box cân bố cục & đổ bóng nhẹ */
+.summary-bank .sum-box,
+.summary-bank .bank-box{
+  display:flex; flex-direction:column;
+  height:100%;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 1px 0 rgba(16,24,40,.03);
+  padding:14px;
+}
+
+/* Totals (bên trái) – kiểu thẻ gọn, số nổi bật */
+.summary-bank .totals{ display:grid; gap:10px; }
+.summary-bank .totals > div{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 12px;
+  background:#f8fafc;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+}
+.summary-bank .totals > div strong{ font-weight:800; color:#0f172a; }
+.summary-bank .totals .grand{
+  background:#eef6ff;
+  border-color:#d6e4ff;
+  font-weight:800;
+  font-size:16px;
+  color:#0f172a;
+}
+
+/* Bank info (bên phải) – tông vàng nhạt như mock */
+.summary-bank .bank-box{
+  background:#fffbeb;
+  border-color:#fde68a;
+  color:#78350f;
+}
+.summary-bank .bank-title{
+  display:flex; align-items:center; gap:8px;
+  font-weight:800; margin-bottom:10px;
+}
+.summary-bank .bank-title .ico{ font-size:18px; }
+
+/* Dòng thông tin trái/phải */
+.summary-bank .bank-rows{ display:grid; gap:8px; margin-bottom:12px; }
+.summary-bank .bank-rows .row{
+  display:flex; justify-content:space-between; align-items:center; gap:12px;
+}
+.summary-bank .bank-rows .label{ color:#6b7280; }
+.summary-bank .bank-rows .value{ color:#8a5a00; font-weight:700; }
+.summary-bank .nowrap{ white-space:nowrap; }
+
+/* Hộp lưu ý */
+.summary-bank .bank-note{
+  display:flex; align-items:center; gap:8px;
+  padding:10px 12px;
+  border:1px solid #facc15;
+  background:#fef9c3;
+  color:#8a5a00;
+  border-radius:12px;
+}
+
+/* Nhẹ nhàng hơn trên mobile */
+@media (max-width: 480px){
+  .summary-bank .totals > div{ padding:8px 10px; }
+  .summary-bank .bank-note{ padding:8px 10px; }
+}
