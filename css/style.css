@@ -633,3 +633,20 @@ s
   .summary-bank .bank-note{ padding:8px 10px; }
 }
 
+.svc-type-cell{
+  display:flex; align-items:center; gap:8px;
+}
+.svc-icon{
+  font-size:16px; line-height:1; display:inline-block;
+}
+.svc-type-select{
+  flex:1; min-width:120px;
+  padding:6px 8px;
+  border:1px solid #e5e7eb; border-radius:8px;
+  font-size:14px;
+}
+/* Nếu dropdown bị cắt bởi thẻ cha */
+.card, .svc-table, .table-title { overflow: visible; }
+
+
+
