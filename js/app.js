@@ -28,10 +28,157 @@ const sumUSD = $("#sumUSD");
 const sumVND = $("#sumVND");
 const sumKRW = $("#sumKRW");
 
+/* ==========================
+   Type ↔ Icon (tự quy định)
+   - Nhãn chuẩn là tiếng Hàn để hiển thị trong bảng.
+   - Alias hỗ trợ nhập Việt/Anh.
+========================== */
+const TYPE_ICON = {
+  "골프": "🏌️",
+  "아파트": "🏢",
+  "차량": "🚐",
+  "빌라": "🏘️",
+  "크루즈": "🛳️",
+  "호텔": "🏨",
+  "식사": "🍽️",
+  "관광": "🗺️",
+  "노래방": "🎤",
+  "공항 서비스": "✈️",
+  "기타": "🧾"
+};
+
+// Alias đa ngôn ngữ → nhãn Hàn
+const TYPE_ALIAS = {
+  // vi → ko
+  "golf": "골프",
+  "chung cư": "아파트",
+  "xe": "차량",
+  "khách sạn": "호텔",
+  "ăn uống": "식사",
+  "tham quan": "관광",
+  "khác": "기타",
+  "dịch vụ khác": "기타서비스",
+  "villa": "빌라",
+  "biệt thự": "빌라",
+  "du thuyền": "유람선",
+
+  // en → ko
+  "apartment": "아파트",
+  "car": "차량",
+  "hotel": "호텔",
+  "food": "식사",
+  "tour": "관광",
+  "other": "기타",
+  "other service": "기타서비스",
+  "services": "기타서비스",
+  "cruise": "크루즈",
+  "yacht": "유람선",
+  "boat": "유람선",
+  "villa": "빌라"
+};
+
+function normalizeType(t) {
+  const k = String(t || "").trim();
+  const key = k.toLowerCase();
+  return TYPE_ALIAS[key] || k; // trả về nhãn Hàn nếu có alias
+}
+
+function getIconForType(typeText) {
+  const t = normalizeType(typeText);
+  return TYPE_ICON[t] || TYPE_ICON["기타"];
+}
+
+/* ==========================
+   Danh sách loại cho dropdown
+   - Hợp nhất loại từ panel (.svc-item) + TYPE_ICON (đảm bảo luôn đủ)
+========================== */
+function getServiceTypes() {
+  const fromPanel = $$(".svc-item")
+    .map(el => normalizeType(el.dataset.type || ""))
+    .filter(Boolean);
+
+  const fromFixed = Object.keys(TYPE_ICON);
+  // Ưu tiên thứ tự panel trước, rồi thêm các loại còn thiếu
+  const merged = [...fromPanel, ...fromFixed];
+  const uniq = [];
+  const seen = new Set();
+  merged.forEach(t => {
+    if (!t) return;
+    if (!seen.has(t)) { seen.add(t); uniq.push(t); }
+  });
+  // Loại bỏ nhãn không mong muốn nếu trùng (ví dụ giữ "유람선" thay vì "크루즈")
+  // (giữ cả hai nếu bạn muốn cả hai xuất hiện)
+  return uniq;
+}
+
+/* ==========================
+   Gắn select loại vào ô đầu tiên
+========================== */
+function mountTypeSelect(tdType, initialType, tr) {
+  // wrapper hiển thị: [icon] [select]
+  const wrap = document.createElement("div");
+  wrap.className = "svc-type-cell";
+
+  // icon (khởi tạo theo loại)
+  const ico = document.createElement("span");
+  ico.className = "svc-icon";
+  ico.textContent = getIconForType(initialType);
+  wrap.appendChild(ico);
+
+  // select loại
+  const sel = document.createElement("select");
+  sel.className = "svc-type-select";
+  const options = getServiceTypes();
+  options.forEach(t => sel.add(new Option(t, t, false, t === normalizeType(initialType))));
+  wrap.appendChild(sel);
+
+  // thay nội dung ô
+  tdType.textContent = "";
+  tdType.appendChild(wrap);
+
+  // lưu data-type
+  tr.dataset.type = normalizeType(initialType);
+
+  // tránh sự kiện cha nuốt click (nếu có listener trên <tr>)
+  ["click","mousedown","touchstart"].forEach(evt =>
+    sel.addEventListener(evt, e => e.stopPropagation())
+  );
+
+  // đổi loại → cập nhật data-type + icon (các cột khác giữ nguyên)
+  // đổi loại → cập nhật data-type + icon + reset dữ liệu
+  sel.addEventListener("change", () => {
+  const newType = normalizeType(sel.value);
+  tr.dataset.type = newType;
+  ico.textContent = getIconForType(newType);
+
+  // reset nội dung
+  const nameInput = tr.querySelector('td[data-label="항목"] input');
+  const priceInput = tr.querySelector('td[data-label="단가"] input');
+  const totalEl = tr.querySelector('td[data-label="총계"]');
+  const qtyInputs = tr.querySelectorAll('td[data-label="수량"] input');
+
+  if (nameInput) nameInput.value = "";
+  if (priceInput) priceInput.value = 0;
+  if (totalEl) totalEl.textContent = formatUSD(0);
+  qtyInputs.forEach(inp => inp.value = 1);
+
+  recalcTotals();
+});
+
+}
+ 
+/* ==========================
+   Tạo 1 dòng dịch vụ
+========================== */
 function createRow({ type = "기타", icon = "🧾", name = "", usd = 0 } = {}) {
+  // chuẩn hoá loại (hỗ trợ alias)
+  type = normalizeType(type);
+  // icon khởi tạo theo map (ưu tiên icon truyền vào nếu bạn muốn)
+  icon = icon && icon !== "🧾" ? icon : getIconForType(type);
+
   const tr = document.createElement("tr");
 
-  // Chọn field số lượng theo loại dịch vụ
+  // Chọn field số lượng theo loại dịch vụ (ban đầu). Khi đổi loại sau này, layout qty KHÔNG đổi.
   let qtyInputs = "";
   if (type.includes("아파트")) { // Chung cư
     qtyInputs = `
@@ -56,7 +203,8 @@ function createRow({ type = "기타", icon = "🧾", name = "", usd = 0 } = {}) 
 
   tr.innerHTML = `
     <td data-label="유형">
-      <span class="type-chip"><span>${icon}</span><strong>${type}</strong></span>
+      <!-- sẽ được thay bằng [icon + select] bên dưới -->
+      <span class="type-chip"><span class="svc-icon">${icon}</span><strong class="svc-type-text">${type}</strong></span>
     </td>
     <td data-label="항목">
       <input class="svc-input" type="text" value="${name}" placeholder="항목명" />
@@ -78,15 +226,17 @@ function createRow({ type = "기타", icon = "🧾", name = "", usd = 0 } = {}) 
     </td>
   `;
 
+  // Gắn select loại (icon auto theo loại)
+  const tdType = tr.querySelector('td[data-label="유형"]');
+  mountTypeSelect(tdType, type, tr);
+
   const priceEl = $(".price", tr);
   const currSel = $(".curr", tr);
   const totalEl = $(".total", tr);
   const delBtn  = $(".btn-del", tr);
 
   // Lấy các input số lượng (nếu có)
-  const qtyEls = [
-    ...tr.querySelectorAll(".qty-person,.qty-day,.qty-round")
-  ];
+  const qtyEls = [...tr.querySelectorAll(".qty-person,.qty-day,.qty-round")];
 
   const recalcRow = () => {
     const price = parseFloat(priceEl.value) || 0;
@@ -144,11 +294,16 @@ function bindServiceItems() {
     item.addEventListener("click", (e) => {
       e.preventDefault();
       const type = item.getAttribute("data-type") || "기타";
-      const icon = item.getAttribute("data-icon") || "🧾";
+      const iconRaw = item.getAttribute("data-icon") || "";
       const name = item.getAttribute("data-name") || $(".svc-name", item)?.textContent || "Item";
       const usd = parseFloat(item.getAttribute("data-usd")) || 0;
       const unit = item.getAttribute("data-unit") || "";
-      createRow({ type, icon, name, usd, unit });
+
+      const normType = normalizeType(type);
+      // icon ưu tiên theo map; nếu data-icon có thì bạn có thể ưu tiên nó:
+      const icon = iconRaw || getIconForType(normType);
+
+      createRow({ type: normType, icon, name, usd, unit });
     });
   });
 }
@@ -158,7 +313,7 @@ function bindServiceItems() {
 ========================== */
 function bindAddLine() {
   $("#addLine")?.addEventListener("click", () => {
-    createRow({ type: "기타", icon: "🧾", name: "", usd: 0 });
+    createRow({ type: "기타", icon: getIconForType("기타"), name: "", usd: 0 });
   });
 }
 
@@ -195,7 +350,6 @@ function bindPanels() {
   });
 }
 
-
 /* ==========================
    Init
 ========================== */
@@ -207,7 +361,9 @@ document.addEventListener("DOMContentLoaded", () => {
   recalcTotals();
 });
 
-
+/* ==========================
+   Xuất/In (giữ nguyên logic của bạn)
+========================== */
 // --- helper: clone section và biến input/select thành text để in đẹp
 function cloneForPrint(sectionEl) {
   const clone = sectionEl.cloneNode(true);
@@ -267,7 +423,6 @@ function openPrintView() {
 <meta charset="utf-8">
 <title>Quotation</title>
 <style>
-  /* Reset in ấn gọn */
   *{box-sizing:border-box}
   body{font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#0f172a;margin:20px;background:#fff}
   .card{border:1px solid #e5e7eb;border-radius:12px;padding:14px;margin-bottom:16px}
@@ -282,16 +437,13 @@ function openPrintView() {
     .g2{grid-template-columns:1fr}
   }
   .pill-input,.print-field{display:block;width:100%;min-height:36px;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
-  /* Bảng dịch vụ */
   .svc-table{width:100%;border-collapse:collapse;margin-top:6px}
   .svc-table th,.svc-table td{border:1px solid #e5e7eb;padding:8px;text-align:left;vertical-align:top}
   .svc-table th{background:#f8fafc;font-weight:700}
   .col-total{text-align:right}
-  /* Totals */
   .totals{display:grid;gap:8px}
   .totals>div{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px}
   .totals .grand{background:#eef6ff;border-color:#d6e4ff;font-weight:800}
-  /* Bank box */
   .summary-bank .bank-box{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px}
   .summary-bank .bank-title{display:flex;align-items:center;gap:8px;font-weight:800;margin-bottom:8px;color:#78350f}
   .summary-bank .bank-rows{display:grid;gap:6px;margin-bottom:8px}
@@ -299,9 +451,7 @@ function openPrintView() {
   .summary-bank .label{color:#6b7280}
   .summary-bank .value{color:#8a5a00;font-weight:700}
   .summary-bank .bank-note{display:flex;gap:8px;padding:8px 10px;background:#fef9c3;border:1px solid #facc15;border-radius:8px;color:#8a5a00}
-  /* Ẩn các nút, icon */
   .btn,.btn.pill,#addLine{display:none!important}
-  /* Margin trang in đẹp */
   @page{size:A4;margin:14mm}
 </style>
 </head>
@@ -319,17 +469,14 @@ function openPrintView() {
 </html>`);
   doc.close();
 }
-
 document.getElementById('btnExport')?.addEventListener('click', openPrintView);
 
-// --- Helper: clone 1 section và chuyển input/select thành text
+// --- Helper: clone 1 section và chuyển input/select thành text (trang xuất màn hình)
 function cloneForExport(sectionEl) {
   const clone = sectionEl.cloneNode(true);
 
-  // Ẩn / xóa nút bấm không cần trên trang xuất
   clone.querySelectorAll('button,.btn,#addLine,.btn-del,.calc-btn').forEach(n => n.remove());
 
-  // Chuyển input/select/textarea -> span text
   clone.querySelectorAll('input, select, textarea').forEach(el => {
     const span = document.createElement('span');
     let val = '';
@@ -343,18 +490,15 @@ function cloneForExport(sectionEl) {
     el.replaceWith(span);
   });
 
-  // Nếu là section chứa bảng dịch vụ: bỏ cột "삭제"
   const tbl = clone.querySelector('.svc-table');
   if (tbl) {
     const delTh = tbl.querySelector('thead th.col-del');
     if (delTh && delTh.parentElement) delTh.parentElement.removeChild(delTh);
     clone.querySelectorAll('tbody td.col-del').forEach(td => td.remove());
   }
-
   return clone;
 }
 
-// --- Gom nội dung 3 phần cần xuất
 function buildExportHTML() {
   const booking = document.querySelector('.booking-section');
   const svcSection = document.querySelector('.svc-table')?.closest('section.card');
@@ -364,11 +508,9 @@ function buildExportHTML() {
   if (booking) parts.push(cloneForExport(booking).outerHTML);
   if (svcSection) parts.push(cloneForExport(svcSection).outerHTML);
   if (summary) parts.push(cloneForExport(summary).outerHTML);
-
   return parts.join('\n');
 }
 
-// --- Mở trang mới (chỉ hiển thị 3 phần trên)
 function openExportPage() {
   const brand = document.getElementById('brand')?.value?.trim() || '';
   const title = brand ? `${brand} — Quotation` : 'Quotation';
@@ -382,35 +524,21 @@ function openExportPage() {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>${title}</title>
-
-  <!-- Dùng lại CSS chính của bạn -->
   <link rel="stylesheet" href="css/style.css" />
-
   <style>
-    /* Tối ưu giao diện cho trang xuất (MÀN HÌNH, không in) */
     body{ background:#fff; }
     .wrap{ width:min(900px,94vw); margin:28px auto; }
-    /* Ẩn mọi nút bấm còn sót lại nếu có */
     .btn, button{ display:none !important; }
-    /* Trong bảng dịch vụ: đảm bảo dạng bảng chuẩn */
-    .svc-table{
-      border-collapse:collapse !important;
-      border-spacing:0 !important;
-      width:100%;
-    }
-    /* Nếu CSS gốc có responsive chuyển sang card, ép giữ bảng trên trang này */
+    .svc-table{ border-collapse:collapse !important; border-spacing:0 !important; width:100%; }
     @media (max-width: 900px){
       .svc-table, .svc-table thead, .svc-table tbody,
       .svc-table th, .svc-table td, .svc-table tr{
-        display:revert !important;
-        width:auto !important;
+        display:revert !important; width:auto !important;
       }
       .svc-table tbody td::before{ content:'' !important; display:none !important; }
     }
-    /* “Giá trị” thay cho input */
     .export-field{
-      display:inline-block;
-      min-height:36px; padding:8px 12px;
+      display:inline-block; min-height:36px; padding:8px 12px;
       border:1px solid #e5e7eb; border-radius:8px; background:#fff;
     }
   </style>
@@ -421,14 +549,10 @@ function openExportPage() {
       <h1 style="margin:0 0 6px">${title}</h1>
       <p class="sub" style="margin:0;color:#64748b">Bản tổng hợp thông tin đặt dịch vụ</p>
     </header>
-
     ${content}
   </div>
 </body>
 </html>`);
   w.document.close();
 }
-
-// Gắn sự kiện cho nút
 document.getElementById('btnExportView')?.addEventListener('click', openExportPage);
-
