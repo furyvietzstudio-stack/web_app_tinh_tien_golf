@@ -316,11 +316,14 @@ function normalizeExistingRows(){
   $$(".svc-type-select").forEach(sel=>{
     const canon = normalizeType(sel.value);
     if (canon !== sel.value) sel.value = canon;
+
     const tr = sel.closest("tr");
     if (tr) {
       tr.dataset.type = canon;
-      const ico = tr.querySelector(".svc-icon");
-      if (ico) ico.textContent = getIconForType(canon);
+      const ico  = tr.querySelector(".svc-icon");
+      const text = tr.querySelector(".svc-type-text");
+      if (ico)  ico.textContent  = getIconForType(canon);
+      if (text) text.textContent = canon; // 👈 cập nhật chữ hiển thị luôn
     }
   });
 }
