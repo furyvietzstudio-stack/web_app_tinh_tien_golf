@@ -447,29 +447,32 @@ document.getElementById('btnExport')?.addEventListener('click', openPrintView);
 function cloneForExport(sectionEl) {
   const clone = sectionEl.cloneNode(true);
 
-  // Xoá nút, button, input không cần thiết
+  // 1️⃣ Xóa các nút không cần in
   clone.querySelectorAll('button,.btn,#addLine,.btn-del,.calc-btn').forEach(n => n.remove());
 
-  // 🧠 Thêm đoạn này để giữ nguyên icon + tên loại trong mỗi dòng
-  clone.querySelectorAll('.type-chip').forEach(chip => {
-    const typeText = chip.querySelector('.svc-type-text')?.textContent?.trim() || '';
-    const iconText = chip.querySelector('.svc-icon')?.textContent?.trim() || '';
-    chip.textContent = `${iconText} ${typeText}`; // giữ nguyên icon + chữ loại
+  // 2️⃣ Giữ lại icon + tên loại trong từng dòng
+  clone.querySelectorAll('td[data-label="유형"]').forEach(td => {
+    const tr = td.closest('tr');
+    const icon = tr?.dataset.icon || td.querySelector('.svc-icon')?.textContent?.trim() || '';
+    const typeText = tr?.dataset.type || td.querySelector('.svc-type-text')?.textContent?.trim() || '';
+    td.textContent = `${icon} ${typeText}`.trim();
   });
 
-  // Chuyển input/select/textarea → span
+  // 3️⃣ Chuyển input/select/textarea → span text
   clone.querySelectorAll('input, select, textarea').forEach(el => {
     const span = document.createElement('span');
     let val = '';
-    if (el.tagName === 'SELECT')
+    if (el.tagName === 'SELECT') {
       val = el.options[el.selectedIndex]?.text || el.value || '';
-    else val = el.value || '';
+    } else {
+      val = el.value || '';
+    }
     span.className = 'export-field';
     span.textContent = val;
     el.replaceWith(span);
   });
 
-  // Xoá cột xóa
+  // 4️⃣ Xóa cột xóa (🗑)
   const tbl = clone.querySelector('.svc-table');
   if (tbl) {
     const delTh = tbl.querySelector('thead th.col-del');
