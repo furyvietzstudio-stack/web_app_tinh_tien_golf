@@ -164,12 +164,17 @@ function mountTypeSelect(tdType, initialType, tr){
 /* ==========================
    Tạo 1 dòng dịch vụ
 ========================== */
-function createRow({ type = "기타", icon = "🧾", name = "", usd = 0 } = {}){
-  type = normalizeType(type);
-  icon = icon && icon !== "🧾" ? icon : getIconForType(type);
+function createRow({ type = "기타", icon = "🧾", name = "", usd = 0 } = {}) {
+  // Chuẩn hoá loại (nếu có hàm normalizeType)
+  type = normalizeType ? normalizeType(type) : type;
+  // Nếu icon chưa có, lấy lại theo loại
+  icon = icon && icon !== "🧾" ? icon : (typeof getIconForType === "function" ? getIconForType(type) : "🧾");
 
   const tr = document.createElement("tr");
+  tr.dataset.type = type;   // ✅ Lưu loại thực tế (dùng cho export)
+  tr.dataset.icon = icon;   // ✅ Lưu icon (dùng cho export)
 
+  // === Khối nhập số lượng tùy theo loại ===
   let qtyInputs = "";
   if (type.includes("아파트")) {
     qtyInputs = `
@@ -192,6 +197,7 @@ function createRow({ type = "기타", icon = "🧾", name = "", usd = 0 } = {}){
     qtyInputs = `<input class="svc-input qty-person" type="number" min="1" value="1" />`;
   }
 
+  // === Tạo dòng trong bảng ===
   tr.innerHTML = `
     <td data-label="유형">
       <span class="type-chip">
@@ -200,7 +206,7 @@ function createRow({ type = "기타", icon = "🧾", name = "", usd = 0 } = {}){
       </span>
     </td>
     <td data-label="항목">
-      <input class="svc-input" type="text" value="${name}" placeholder="항목명" />
+      <input class="svc-input svc-name" type="text" value="${name}" placeholder="항목명" />
     </td>
     <td data-label="단가">
       <input class="svc-input price" type="number" min="0" step="0.01" value="${Number(usd) || 0}" />
@@ -219,14 +225,19 @@ function createRow({ type = "기타", icon = "🧾", name = "", usd = 0 } = {}){
     </td>
   `;
 
-  mountTypeSelect(tr.querySelector('td[data-label="유형"]'), type, tr);
+  // Mount lại select loại nếu có
+  if (typeof mountTypeSelect === "function") {
+    mountTypeSelect(tr.querySelector('td[data-label="유형"]'), type, tr);
+  }
 
-  const priceEl = $(".price", tr);
-  const currSel = $(".curr", tr);
-  const totalEl = $(".total", tr);
-  const delBtn  = $(".btn-del", tr);
+  // === Lấy các phần tử cần thiết ===
+  const priceEl = tr.querySelector(".price");
+  const currSel = tr.querySelector(".curr");
+  const totalEl = tr.querySelector(".total");
+  const delBtn  = tr.querySelector(".btn-del");
   const qtyEls  = [...tr.querySelectorAll(".qty-person,.qty-day,.qty-round")];
 
+  // === Hàm tính tổng dòng ===
   const recalcRow = () => {
     const price = parseFloat(priceEl.value) || 0;
     const { vnd, krw } = getRates();
@@ -247,12 +258,14 @@ function createRow({ type = "기타", icon = "🧾", name = "", usd = 0 } = {}){
     recalcTotals();
   };
 
+  // === Gắn event ===
   [priceEl, currSel, ...qtyEls].forEach(el => el.addEventListener("input", recalcRow));
   delBtn.addEventListener("click", () => { tr.remove(); recalcTotals(); });
 
   svcBody.appendChild(tr);
   recalcRow();
 }
+
 
 /* ==========================
    Totals
@@ -511,3 +524,5 @@ body{background:#fff}.wrap{width:min(900px,94vw);margin:28px auto}
   w.document.close();
 }
 document.getElementById('btnExportView')?.addEventListener('click', openExportPage);
+
+
