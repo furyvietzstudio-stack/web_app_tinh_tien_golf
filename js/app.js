@@ -1,19 +1,16 @@
 /* ==========================
    Helpers
 ========================== */
-const $ = (sel, root = document) => root.querySelector(sel);
+const $  = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
 const formatUSD = (n) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n || 0);
-
 const formatVND = (n) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(n || 0);
-
 const formatKRW = (n) =>
   new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW", maximumFractionDigits: 0 }).format(n || 0);
 
-/* Lấy tỷ giá hiện tại */
 const getRates = () => {
   const vnd = parseFloat($("#rateVND")?.value) || 0;
   const krw = parseFloat($("#rateKRW")?.value) || 0;
@@ -24,14 +21,12 @@ const getRates = () => {
    DOM targets
 ========================== */
 const svcBody = $("#svcBody");
-const sumUSD = $("#sumUSD");
-const sumVND = $("#sumVND");
-const sumKRW = $("#sumKRW");
+const sumUSD  = $("#sumUSD");
+const sumVND  = $("#sumVND");
+const sumKRW  = $("#sumKRW");
 
 /* ==========================
-   Type ↔ Icon (tự quy định)
-   - Nhãn chuẩn là tiếng Hàn để hiển thị trong bảng.
-   - Alias hỗ trợ nhập Việt/Anh.
+   Type & Icon maps
 ========================== */
 const TYPE_ICON = {
   "골프": "🏌️",
@@ -39,6 +34,7 @@ const TYPE_ICON = {
   "차량": "🚐",
   "빌라": "🏘️",
   "크루즈": "🛳️",
+  "유람선": "🛳️",
   "호텔": "🏨",
   "식사": "🍽️",
   "관광": "🗺️",
@@ -47,40 +43,27 @@ const TYPE_ICON = {
   "기타": "🧾"
 };
 
-// Alias đa ngôn ngữ → nhãn Hàn
+// Alias đa ngôn ngữ + viết tắt → nhãn Hàn chuẩn
 const TYPE_ALIAS = {
   // vi → ko
-  "golf": "골프",
-  "chung cư": "아파트",
-  "xe": "차량",
-  "khách sạn": "호텔",
-  "ăn uống": "식사",
-  "tham quan": "관광",
-  "khác": "기타",
-  "dịch vụ khác": "기타서비스",
-  "villa": "빌라",
-  "biệt thự": "빌라",
-  "du thuyền": "유람선",
+  "golf":"골프", "chung cư":"아파트", "xe":"차량", "khách sạn":"호텔",
+  "ăn uống":"식사", "tham quan":"관광", "khác":"기타", "dịch vụ khác":"기타",
+  "villa":"빌라", "biệt thự":"빌라", "du thuyền":"유람선",
 
   // en → ko
-  "apartment": "아파트",
-  "car": "차량",
-  "hotel": "호텔",
-  "food": "식사",
-  "tour": "관광",
-  "other": "기타",
-  "other service": "기타서비스",
-  "services": "기타서비스",
-  "cruise": "크루즈",
-  "yacht": "유람선",
-  "boat": "유람선",
-  "villa": "빌라"
+  "golf":"골프", "apartment":"아파트", "car":"차량", "hotel":"호텔",
+  "food":"식사", "tour":"관광", "other":"기타", "other service":"기타",
+  "services":"기타", "cruise":"크루즈", "yacht":"유람선", "boat":"유람선", "villa":"빌라",
+
+  // viết tắt (ko → ko)
+  "아파":"아파트", "골":"골프", "차":"차량",
+  "기타서비스":"기타" // nếu muốn giữ nhãn này riêng thì đổi về "기타서비스"
 };
 
 function normalizeType(t) {
   const k = String(t || "").trim();
   const key = k.toLowerCase();
-  return TYPE_ALIAS[key] || k; // trả về nhãn Hàn nếu có alias
+  return TYPE_ALIAS[key] || k; // trả về nhãn Hàn chuẩn nếu có alias
 }
 
 function getIconForType(typeText) {
@@ -89,122 +72,106 @@ function getIconForType(typeText) {
 }
 
 /* ==========================
-   Danh sách loại cho dropdown
-   - Hợp nhất loại từ panel (.svc-item) + TYPE_ICON (đảm bảo luôn đủ)
+   Lấy danh sách loại cho dropdown
 ========================== */
 function getServiceTypes() {
   const fromPanel = $$(".svc-item")
     .map(el => normalizeType(el.dataset.type || ""))
     .filter(Boolean);
-
   const fromFixed = Object.keys(TYPE_ICON);
-  // Ưu tiên thứ tự panel trước, rồi thêm các loại còn thiếu
   const merged = [...fromPanel, ...fromFixed];
   const uniq = [];
   const seen = new Set();
-  merged.forEach(t => {
-    if (!t) return;
-    if (!seen.has(t)) { seen.add(t); uniq.push(t); }
-  });
-  // Loại bỏ nhãn không mong muốn nếu trùng (ví dụ giữ "유람선" thay vì "크루즈")
-  // (giữ cả hai nếu bạn muốn cả hai xuất hiện)
+  merged.forEach(t => { if (t && !seen.has(t)) { seen.add(t); uniq.push(t); } });
   return uniq;
 }
 
 /* ==========================
-   Gắn select loại vào ô đầu tiên
+   Ô "Loại": icon + select
 ========================== */
 function mountTypeSelect(tdType, initialType, tr) {
-  // wrapper hiển thị: [icon] [select]
   const wrap = document.createElement("div");
   wrap.className = "svc-type-cell";
 
-  // icon (khởi tạo theo loại)
   const ico = document.createElement("span");
   ico.className = "svc-icon";
   ico.textContent = getIconForType(initialType);
   wrap.appendChild(ico);
 
-  // select loại
   const sel = document.createElement("select");
   sel.className = "svc-type-select";
   const options = getServiceTypes();
-  options.forEach(t => sel.add(new Option(t, t, false, t === normalizeType(initialType))));
+  const canonInit = normalizeType(initialType);
+  options.forEach(t => sel.add(new Option(t, t, false, t === canonInit)));
   wrap.appendChild(sel);
 
-  // thay nội dung ô
   tdType.textContent = "";
   tdType.appendChild(wrap);
-
-  // lưu data-type
-  tr.dataset.type = normalizeType(initialType);
+  tr.dataset.type = canonInit;
 
   // tránh sự kiện cha nuốt click (nếu có listener trên <tr>)
   ["click","mousedown","touchstart"].forEach(evt =>
     sel.addEventListener(evt, e => e.stopPropagation())
   );
 
-  // đổi loại → cập nhật data-type + icon (các cột khác giữ nguyên)
-  // đổi loại → cập nhật data-type + icon + reset dữ liệu
+  // đổi loại → cập nhật data-type + icon + reset fields
   sel.addEventListener("change", () => {
-  const newType = normalizeType(sel.value);
-  tr.dataset.type = newType;
-  ico.textContent = getIconForType(newType);
+    const newType = normalizeType(sel.value);
+    tr.dataset.type = newType;
+    ico.textContent = getIconForType(newType);
 
-  // reset nội dung
-  const nameInput = tr.querySelector('td[data-label="항목"] input');
-  const priceInput = tr.querySelector('td[data-label="단가"] input');
-  const totalEl = tr.querySelector('td[data-label="총계"]');
-  const qtyInputs = tr.querySelectorAll('td[data-label="수량"] input');
+    const nameInput  = tr.querySelector('td[data-label="항목"] input');
+    const priceInput = tr.querySelector('td[data-label="단가"] input');
+    const totalEl    = tr.querySelector('td[data-label="총계"]');
+    const qtyInputs  = tr.querySelectorAll('td[data-label="수량"] input');
 
-  if (nameInput) nameInput.value = "";
-  if (priceInput) priceInput.value = 0;
-  if (totalEl) totalEl.textContent = formatUSD(0);
-  qtyInputs.forEach(inp => inp.value = 1);
+    if (nameInput)  nameInput.value = "";
+    if (priceInput) priceInput.value = 0;
+    if (totalEl)    totalEl.textContent = formatUSD(0);
+    qtyInputs.forEach(inp => inp.value = 1);
 
-  recalcTotals();
-});
-
+    recalcTotals();
+  });
 }
- 
+
 /* ==========================
    Tạo 1 dòng dịch vụ
 ========================== */
 function createRow({ type = "기타", icon = "🧾", name = "", usd = 0 } = {}) {
-  // chuẩn hoá loại (hỗ trợ alias)
   type = normalizeType(type);
-  // icon khởi tạo theo map (ưu tiên icon truyền vào nếu bạn muốn)
   icon = icon && icon !== "🧾" ? icon : getIconForType(type);
 
   const tr = document.createElement("tr");
 
-  // Chọn field số lượng theo loại dịch vụ (ban đầu). Khi đổi loại sau này, layout qty KHÔNG đổi.
+  // layout số lượng theo loại ban đầu (đổi loại sau KHÔNG đổi layout)
   let qtyInputs = "";
-  if (type.includes("아파트")) { // Chung cư
+  if (type.includes("아파트")) {
     qtyInputs = `
       <div class="svc-qty-wrap">
         <input class="svc-input qty-person" type="number" min="1" value="1" placeholder="인원" />
-        <input class="svc-input qty-day" type="number" min="1" value="1" placeholder="일수" />
+        <input class="svc-input qty-day"    type="number" min="1" value="1" placeholder="일수" />
       </div>`;
-  } else if (type.includes("골프")) { // Golf
+  } else if (type.includes("골프")) {
     qtyInputs = `
       <div class="svc-qty-wrap">
         <input class="svc-input qty-person" type="number" min="1" value="1" placeholder="인원" />
-        <input class="svc-input qty-round" type="number" min="1" value="1" placeholder="라운드" />
+        <input class="svc-input qty-round"  type="number" min="1" value="1" placeholder="라운드" />
       </div>`;
-  } else if (type.includes("차량")) { // Thuê xe
+  } else if (type.includes("차량")) {
     qtyInputs = `
       <div class="svc-qty-wrap">
         <input class="svc-input qty-person" type="number" min="1" value="1" placeholder="인원" />
       </div>`;
-  } else { // Mặc định
+  } else {
     qtyInputs = `<input class="svc-input qty-person" type="number" min="1" value="1" />`;
   }
 
   tr.innerHTML = `
     <td data-label="유형">
-      <!-- sẽ được thay bằng [icon + select] bên dưới -->
-      <span class="type-chip"><span class="svc-icon">${icon}</span><strong class="svc-type-text">${type}</strong></span>
+      <span class="type-chip">
+        <span class="svc-icon">${icon}</span>
+        <strong class="svc-type-text">${type}</strong>
+      </span>
     </td>
     <td data-label="항목">
       <input class="svc-input" type="text" value="${name}" placeholder="항목명" />
@@ -226,7 +193,7 @@ function createRow({ type = "기타", icon = "🧾", name = "", usd = 0 } = {}) 
     </td>
   `;
 
-  // Gắn select loại (icon auto theo loại)
+  // gắn select loại (và icon)
   const tdType = tr.querySelector('td[data-label="유형"]');
   mountTypeSelect(tdType, type, tr);
 
@@ -234,9 +201,7 @@ function createRow({ type = "기타", icon = "🧾", name = "", usd = 0 } = {}) 
   const currSel = $(".curr", tr);
   const totalEl = $(".total", tr);
   const delBtn  = $(".btn-del", tr);
-
-  // Lấy các input số lượng (nếu có)
-  const qtyEls = [...tr.querySelectorAll(".qty-person,.qty-day,.qty-round")];
+  const qtyEls  = [...tr.querySelectorAll(".qty-person,.qty-day,.qty-round")];
 
   const recalcRow = () => {
     const price = parseFloat(priceEl.value) || 0;
@@ -270,9 +235,7 @@ function createRow({ type = "기타", icon = "🧾", name = "", usd = 0 } = {}) 
    Totals
 ========================== */
 function getAllRowUSD() {
-  // Đọc tất cả .total -> parse từ text hoặc tính lại trực tiếp
   return $$(".total", svcBody).reduce((sum, td) => {
-    // td.textContent như "$136.00" -> bỏ ký hiệu & phẩy
     const num = parseFloat(td.textContent.replace(/[^\d.-]/g, "")) || 0;
     return sum + num;
   }, 0);
@@ -296,14 +259,12 @@ function bindServiceItems() {
       const type = item.getAttribute("data-type") || "기타";
       const iconRaw = item.getAttribute("data-icon") || "";
       const name = item.getAttribute("data-name") || $(".svc-name", item)?.textContent || "Item";
-      const usd = parseFloat(item.getAttribute("data-usd")) || 0;
-      const unit = item.getAttribute("data-unit") || "";
+      const usd  = parseFloat(item.getAttribute("data-usd")) || 0;
 
       const normType = normalizeType(type);
-      // icon ưu tiên theo map; nếu data-icon có thì bạn có thể ưu tiên nó:
       const icon = iconRaw || getIconForType(normType);
 
-      createRow({ type: normType, icon, name, usd, unit });
+      createRow({ type: normType, icon, name, usd });
     });
   });
 }
@@ -336,17 +297,31 @@ function bindPanels() {
     if (!head) return;
 
     head.addEventListener("click", () => {
-      // Đóng tất cả panels khác
+      // Đóng panel khác
       $$(".svc-panel").forEach(p => {
-        if(p !== panel) {
-          p.classList.add("collapsed");
-          p.classList.remove("open");
-        }
+        if (p !== panel) { p.classList.add("collapsed"); p.classList.remove("open"); }
       });
       // Toggle panel hiện tại
       panel.classList.toggle("collapsed");
       panel.classList.toggle("open");
     });
+  });
+}
+
+/* ==========================
+   Chuẩn hoá các dòng đang có
+   (trước khi Export/Print)
+========================== */
+function normalizeExistingRows(){
+  $$(".svc-type-select").forEach(sel=>{
+    const canon = normalizeType(sel.value);
+    if (canon !== sel.value) sel.value = canon;
+    const tr = sel.closest("tr");
+    if (tr) {
+      tr.dataset.type = canon;
+      const ico = tr.querySelector(".svc-icon");
+      if (ico) ico.textContent = getIconForType(canon);
+    }
   });
 }
 
@@ -358,20 +333,17 @@ document.addEventListener("DOMContentLoaded", () => {
   bindAddLine();
   bindRates();
   bindPanels();
+  normalizeExistingRows(); // chuẩn hóa ngay khi tải
   recalcTotals();
 });
 
 /* ==========================
-   Xuất/In (giữ nguyên logic của bạn)
+   Xuất/In
 ========================== */
-// --- helper: clone section và biến input/select thành text để in đẹp
+// Clone section và biến input/select thành text để in
 function cloneForPrint(sectionEl) {
   const clone = sectionEl.cloneNode(true);
-
-  // bỏ các nút không cần in
   clone.querySelectorAll('button,.btn,.btn-del,.calc-btn,#addLine').forEach(n => n.remove());
-
-  // đổi input/select thành span text
   clone.querySelectorAll('input, select, textarea').forEach(el => {
     const span = document.createElement('span');
     let val = '';
@@ -384,26 +356,23 @@ function cloneForPrint(sectionEl) {
     span.textContent = val;
     el.replaceWith(span);
   });
-
   return clone;
 }
 
-// --- build HTML cần in
 function buildPrintContent() {
-  const booking = document.querySelector('.booking-section');
-  const svcSection = document.querySelector('.svc-table')?.closest('section.card');
-  const summary = document.querySelector('.summary-bank');
+  const booking   = document.querySelector('.booking-section');
+  const svcSection= document.querySelector('.svc-table')?.closest('section.card');
+  const summary   = document.querySelector('.summary-bank');
 
   const parts = [];
-  if (booking) parts.push(cloneForPrint(booking).outerHTML);
-  if (svcSection) parts.push(cloneForPrint(svcSection).outerHTML);
-  if (summary) parts.push(cloneForPrint(summary).outerHTML);
-
+  if (booking)   parts.push(cloneForPrint(booking).outerHTML);
+  if (svcSection)parts.push(cloneForPrint(svcSection).outerHTML);
+  if (summary)   parts.push(cloneForPrint(summary).outerHTML);
   return parts.join('\n');
 }
 
-// --- mở trang in bằng iframe (khỏi bị chặn popup)
 function openPrintView() {
+  normalizeExistingRows(); // đảm bảo loại/icon chuẩn trước khi in
   const html = buildPrintContent();
 
   const iframe = document.createElement('iframe');
@@ -471,7 +440,7 @@ function openPrintView() {
 }
 document.getElementById('btnExport')?.addEventListener('click', openPrintView);
 
-// --- Helper: clone 1 section và chuyển input/select thành text (trang xuất màn hình)
+// Clone section để xuất trang xem (không in)
 function cloneForExport(sectionEl) {
   const clone = sectionEl.cloneNode(true);
 
@@ -500,18 +469,19 @@ function cloneForExport(sectionEl) {
 }
 
 function buildExportHTML() {
-  const booking = document.querySelector('.booking-section');
-  const svcSection = document.querySelector('.svc-table')?.closest('section.card');
-  const summary = document.querySelector('.summary-bank');
+  const booking   = document.querySelector('.booking-section');
+  const svcSection= document.querySelector('.svc-table')?.closest('section.card');
+  const summary   = document.querySelector('.summary-bank');
 
   const parts = [];
-  if (booking) parts.push(cloneForExport(booking).outerHTML);
+  if (booking)    parts.push(cloneForExport(booking).outerHTML);
   if (svcSection) parts.push(cloneForExport(svcSection).outerHTML);
-  if (summary) parts.push(cloneForExport(summary).outerHTML);
+  if (summary)    parts.push(cloneForExport(summary).outerHTML);
   return parts.join('\n');
 }
 
 function openExportPage() {
+  normalizeExistingRows(); // chuẩn hóa trước khi xuất
   const brand = document.getElementById('brand')?.value?.trim() || '';
   const title = brand ? `${brand} — Quotation` : 'Quotation';
 
