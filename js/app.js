@@ -431,23 +431,46 @@ setTimeout(function(){window.focus();window.print();setTimeout(()=>window.close(
 }
 document.getElementById('btnExport')?.addEventListener('click', openPrintView);
 
-function cloneForExport(sectionEl){
+function cloneForExport(sectionEl) {
   const clone = sectionEl.cloneNode(true);
+
+  // ẩn hoặc xoá các nút
   clone.querySelectorAll('button,.btn,#addLine,.btn-del,.calc-btn').forEach(n => n.remove());
+
+  // chuyển input/select/textarea → span text
   clone.querySelectorAll('input, select, textarea').forEach(el => {
     const span = document.createElement('span');
     let val = '';
-    if (el.tagName === 'SELECT') val = el.options[el.selectedIndex]?.text || el.value || '';
-    else val = el.value || '';
-    span.className = 'export-field'; span.textContent = val; el.replaceWith(span);
+
+    // ✅ nếu là select loại dịch vụ (svc-type-select) → lấy chữ thực tế đang hiển thị trong bảng
+    if (el.classList.contains('svc-type-select')) {
+      const tr = el.closest('tr');
+      const txt = tr?.querySelector('.svc-type-text')?.textContent?.trim();
+      val = txt || el.options[el.selectedIndex]?.text || el.value || '';
+    }
+    else if (el.tagName === 'SELECT') {
+      val = el.options[el.selectedIndex]?.text || el.value || '';
+    }
+    else {
+      val = el.value || '';
+    }
+
+    span.className = 'export-field';
+    span.textContent = val;
+    el.replaceWith(span);
   });
+
+  // xoá cột "삭제"
   const tbl = clone.querySelector('.svc-table');
   if (tbl) {
-    const delTh = tbl.querySelector('thead th.col-del'); if (delTh && delTh.parentElement) delTh.parentElement.removeChild(delTh);
+    const delTh = tbl.querySelector('thead th.col-del');
+    if (delTh && delTh.parentElement) delTh.parentElement.removeChild(delTh);
     clone.querySelectorAll('tbody td.col-del').forEach(td => td.remove());
   }
+
   return clone;
 }
+
 function buildExportHTML(){
   const booking    = document.querySelector('.booking-section');
   const svcSection = document.querySelector('.svc-table')?.closest('section.card');
