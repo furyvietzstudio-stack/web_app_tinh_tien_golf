@@ -447,33 +447,29 @@ document.getElementById('btnExport')?.addEventListener('click', openPrintView);
 function cloneForExport(sectionEl) {
   const clone = sectionEl.cloneNode(true);
 
-  // ẩn hoặc xoá các nút
+  // Xoá nút, button, input không cần thiết
   clone.querySelectorAll('button,.btn,#addLine,.btn-del,.calc-btn').forEach(n => n.remove());
 
-  // chuyển input/select/textarea → span text
+  // 🧠 Thêm đoạn này để giữ nguyên icon + tên loại trong mỗi dòng
+  clone.querySelectorAll('.type-chip').forEach(chip => {
+    const typeText = chip.querySelector('.svc-type-text')?.textContent?.trim() || '';
+    const iconText = chip.querySelector('.svc-icon')?.textContent?.trim() || '';
+    chip.textContent = `${iconText} ${typeText}`; // giữ nguyên icon + chữ loại
+  });
+
+  // Chuyển input/select/textarea → span
   clone.querySelectorAll('input, select, textarea').forEach(el => {
     const span = document.createElement('span');
     let val = '';
-
-    // ✅ nếu là select loại dịch vụ (svc-type-select) → lấy chữ thực tế đang hiển thị trong bảng
-    if (el.classList.contains('svc-type-select')) {
-      const tr = el.closest('tr');
-      const txt = tr?.querySelector('.svc-type-text')?.textContent?.trim();
-      val = txt || el.options[el.selectedIndex]?.text || el.value || '';
-    }
-    else if (el.tagName === 'SELECT') {
+    if (el.tagName === 'SELECT')
       val = el.options[el.selectedIndex]?.text || el.value || '';
-    }
-    else {
-      val = el.value || '';
-    }
-
+    else val = el.value || '';
     span.className = 'export-field';
     span.textContent = val;
     el.replaceWith(span);
   });
 
-  // xoá cột "삭제"
+  // Xoá cột xóa
   const tbl = clone.querySelector('.svc-table');
   if (tbl) {
     const delTh = tbl.querySelector('thead th.col-del');
@@ -483,6 +479,7 @@ function cloneForExport(sectionEl) {
 
   return clone;
 }
+
 
 function buildExportHTML(){
   const booking    = document.querySelector('.booking-section');
